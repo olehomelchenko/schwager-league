@@ -31,11 +31,8 @@ def render_topic_stats(df):
         .agg({"value": "count", "Name": ", ".join})
         .reset_index()
     )
+    result = []
     for i, g in res_by_qid.groupby("Тема"):
-        f"""###  {i}"""
-        with st.expander("Питання"):
-            st.markdown("\n\n---\n".join(g["Питання"].unique()))
-
         base = (
             alt.Chart(g.query("val_emoji in ['✅', '❌', '⚪️']"))
             .mark_bar()
@@ -54,14 +51,20 @@ def render_topic_stats(df):
             .properties(height=200, width=100)
         )
         text = base.mark_text(dy=-10).encode(text="value")
-        st.altair_chart((base + text).facet(column="qid:N"))
+
+        result.append(
+            {
+                "header": i,
+                "questions_text": "\n\n---\n".join(g["Питання"].unique()),
+                "chart": (base + text).facet(column=alt.Column("qid:N", title=None)),
+            }
+        )
+    return result
 
 
-        
-        
 def render_game_stats(df):
+    result = []
     for i, g in df.groupby("Game"):
-        f"""{i}: {' / '.join(g['Name'].unique())} """
         totals = (
             g.query("val_emoji in ['✅', '❌']")
             .groupby("Name")
@@ -84,18 +87,24 @@ def render_game_stats(df):
             .sort_values("Балли", ascending=False)
         )
         results = g.pivot(index="Name", columns="qid", values="val_emoji")
-        st.write(totals.join(results))
+
         g["cumsum"] = g.groupby("Name")["pts"].cumsum()
         g["q"] = g["Питання"]
-        st.altair_chart(
-            alt.Chart(g[["Name", "pts", "cumsum", "qid", "Питання", 'Тема']])
+        chart = (
+            alt.Chart(g[["Name", "pts", "cumsum", "qid", "Питання", "Тема"]])
             .mark_line(opacity=0.7, point=True)
             .encode(
                 x=alt.X("qid:N", title=None),
                 y=alt.Y("cumsum:Q", title=None),
                 color="Name:N",
-                tooltip=["Тема:N","Питання:N"],
+                tooltip=["Тема:N", "Питання:N"],
             )
             .properties(width=800)
         )
-        "---"
+        r = {
+            "header": i,
+            "results_table": totals.join(results),
+            "chart": chart,
+        }
+        result.append(r)
+    return result

@@ -33,10 +33,18 @@ def main():
     I_TAB_TOPIC_STATS, I_TAB_GAME_STATS = st.tabs(["Статистика тем", "Статистика боїв"])
 
     with I_TAB_TOPIC_STATS:
-        render_topic_stats(df)
+        results = render_topic_stats(df)
+        for result in results:
+            st.markdown(f"### {result['header']}")
+            with st.expander("Питання"):
+                st.markdown(result["questions_text"])
+            st.altair_chart(result["chart"])
 
     with I_TAB_GAME_STATS:
-        render_game_stats(df)
+        for result in render_game_stats(df):
+            st.header(result["header"])
+            st.write(result["results_table"])
+            st.altair_chart(result["chart"])
 
 
 main()
