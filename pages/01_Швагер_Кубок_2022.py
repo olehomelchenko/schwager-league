@@ -26,8 +26,6 @@ def main():
 
     I_FILE_INPUT = st.selectbox("Оберіть коло", options=df["round"].unique())
 
-    # I_ROUND_TABS = st.tabs(list(df['round'].unique()))
-
     df = df[df["round"] == I_FILE_INPUT]
 
     I_TAB_TOPIC_STATS, I_TAB_GAME_STATS = st.tabs(["Статистика тем", "Статистика боїв"])
