@@ -7,7 +7,9 @@ from utils import (
 
 st.set_page_config(layout="wide")
 st.markdown("# Швагер-Кубок 2022")
-st.markdown("Вихідні дані взяті з гугл-таблиці за [посиланням](https://docs.google.com/spreadsheets/d/1rvGhGGN45SY5AeFjvK6JDOw9P3P98u5M6qarIQEVei8/edit#gid=0)")
+st.markdown(
+    "Вихідні дані взяті з гугл-таблиці за [посиланням](https://docs.google.com/spreadsheets/d/1rvGhGGN45SY5AeFjvK6JDOw9P3P98u5M6qarIQEVei8/edit#gid=0)"
+)
 st.markdown("Помітили помилку? Пишіть [Олегу](https://fb.com/ptrvtch)")
 
 
