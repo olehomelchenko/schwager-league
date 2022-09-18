@@ -4,10 +4,12 @@ import pandas as pd
 import re
 from utils import (
     get_total_stats,
+    read_stats_to_dataframe,
     transform_data,
     render_topic_stats,
     render_game_stats,
-    get_total_stats, generate_scatter
+    get_total_stats,
+    generate_scatter,
 )
 
 st.set_page_config(layout="wide")
@@ -15,18 +17,7 @@ st.markdown("# Швагер-кубок 2022")
 
 
 def main():
-    files = glob("data/01_Швагер_Кубок_2022/*.csv")
-    files.sort()
-
-    df_all = []
-    for file in files:
-        match = re.search(r"data/\d+_(?P<name>.*)/(?P<round>\d+).csv", file)
-        df = pd.read_csv(file, header=[0, 1, 2, 3])
-        rnd = match.group("round")
-        df = transform_data(df, rnd=rnd)
-        df_all.append(df)
-
-    df_all = pd.concat(df_all)
+    df_all = read_stats_to_dataframe("data/01_Швагер_Кубок_2022/*.csv")
 
     (
         I_TAB_TOTALS,

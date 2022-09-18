@@ -1,6 +1,24 @@
 import numpy as np
 import pandas as pd
 import altair as alt
+from glob import glob
+import re
+
+
+def read_stats_to_dataframe(glob_string: str):
+    files = glob(glob_string)
+    files.sort()
+
+    df_all = []
+    for file in files:
+        match = re.search(r"data/\d+_(?P<name>.*)/(?P<round>\d+).csv", file)
+        df = pd.read_csv(file, header=[0, 1, 2, 3])
+        rnd = match.group("round")
+        df = transform_data(df, rnd=rnd)
+        df_all.append(df)
+
+    df_all = pd.concat(df_all)
+    return df_all
 
 
 def transform_data(df, rnd):
@@ -164,7 +182,7 @@ def generate_scatter(df):
 
     text = (
         alt.Chart(df)
-        .mark_text(opacity=0.9, align='left', dx=-0, dy=-20)
+        .mark_text(opacity=0.9, align="left", dx=-0, dy=-20)
         .encode(
             x="sum(pts_plus):Q",
             y=alt.Y("sum(pts_minus):Q", scale=alt.Scale(reverse=True)),
