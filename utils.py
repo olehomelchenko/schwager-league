@@ -207,14 +207,17 @@ def create_tabs(df_all):
     with I_TAB_TOTALS:
         chart = generate_scatter(df_all)
 
-        st.altair_chart(chart)
+        with st.expander("📊 плюси та мінуси по колах/темах"):
+            st.altair_chart(chart)
         total_stats = get_total_stats(df_all, "round")
+        
+        st.markdown("""### Статистика по колах""")
         st.write(total_stats)
 
-        st.write(df_all)
-
+        # st.write(df_all)
+        st.markdown("### Статистика бо темах")
         for i, g in df_all.groupby("round"):
-            f"""Коло {i}"""
+            st.markdown(f"""> Коло {i}""")
             st.dataframe(get_total_stats(g, "Тема"))
 
     with I_TAB_TOPIC_STATS:
@@ -222,6 +225,7 @@ def create_tabs(df_all):
             "Оберіть коло",
             options=df_all["round"].unique(),
             format_func=lambda x: f"Коло {x}",
+            key="topic_stats_filter",
         )
 
         df = df_all[df_all["round"] == I_FILE_INPUT]
@@ -235,6 +239,13 @@ def create_tabs(df_all):
             st.markdown(result["stats"])
 
     with I_TAB_GAME_STATS:
+        I_FILE_INPUT = st.selectbox(
+            "Оберіть коло",
+            options=df_all["round"].unique(),
+            format_func=lambda x: f"Коло {x}",
+            key="game_stats_filter",
+        )
+        df = df_all[df_all["round"] == I_FILE_INPUT]
         for result in render_game_stats(df):
             st.header(result["header"])
             st.write(result["results_table"])
