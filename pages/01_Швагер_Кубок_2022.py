@@ -1,16 +1,13 @@
 from glob import glob
 import streamlit as st
 import pandas as pd
-import numpy as np
-import requests
-import altair as alt
 import re
 from utils import (
     get_total_stats,
     transform_data,
     render_topic_stats,
     render_game_stats,
-    get_total_stats,
+    get_total_stats, generate_scatter
 )
 
 st.set_page_config(layout="wide")
@@ -38,8 +35,13 @@ def main():
     ) = st.tabs(["Загалом", "Статистика тем", "Статистика боїв"])
 
     with I_TAB_TOTALS:
+        chart = generate_scatter(df_all)
+
+        st.altair_chart(chart)
         total_stats = get_total_stats(df_all, "round")
         st.write(total_stats)
+
+        st.write(df_all)
 
         for i, g in df_all.groupby("round"):
             f"""Коло {i}"""

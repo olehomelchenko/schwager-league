@@ -23,6 +23,7 @@ def transform_data(df, rnd):
     df["pts"] = df["price"] * df["value"]
     df["pts_plus"] = np.select([df["value"] > 0], [df["pts"]], default=0)
     df["pts_minus"] = np.select([df["value"] < 0], [df["pts"]], default=0)
+    df["pts_abs"] = df["pts_plus"] - df["pts_minus"]  # total value of activity
     df.drop(columns=["variable", "c2"], inplace=True)
     return df
 
@@ -139,3 +140,37 @@ def get_total_stats(df, split_by):
     total_stats["Сер. Мінуси за тему"] = total_stats["В Мінус"] / total_stats["Бої"]
 
     return total_stats
+
+
+def generate_scatter(df):
+    base = (
+        alt.Chart(df)
+        .mark_circle(opacity=0.5)
+        .encode(
+            x="sum(pts_plus):Q",
+            y=alt.Y("sum(pts_minus):Q", scale=alt.Scale(reverse=True)),
+            color="round:N",
+            detail="Тема",
+            tooltip=[
+                alt.Tooltip("round:N", title="Коло"),
+                alt.Tooltip("Тема", title="Тема"),
+                alt.Tooltip("sum(pts)", title="Балли"),
+                alt.Tooltip("sum(pts_plus)", title="В плюс"),
+                alt.Tooltip("sum(pts_minus)", title="В мінус"),
+            ],
+            size=alt.Size("sum(pts_abs):Q", legend=None),
+        )
+    )
+
+    text = (
+        alt.Chart(df)
+        .mark_text(opacity=0.9, align='left', dx=-0, dy=-20)
+        .encode(
+            x="sum(pts_plus):Q",
+            y=alt.Y("sum(pts_minus):Q", scale=alt.Scale(reverse=True)),
+            color=alt.Color("round:N", legend=None),
+            detail="Тема",
+            text="Тема",
+        )
+    )
+    return (text + base).configure_view(width=1000, height=600)
