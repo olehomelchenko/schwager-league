@@ -14,7 +14,7 @@ st.markdown("Помітили помилку? Пишіть [Олегу](https://
 
 
 def main():
-    df_all = read_stats_to_dataframe("data/04_Швагер-Ліга_2022_Зима/*.csv")
+    df_all = read_stats_to_dataframe("data/03_Швагер-Ліга_2022_Зима/*.csv")
 
     create_tabs(df_all)
 
