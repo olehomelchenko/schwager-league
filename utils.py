@@ -1,8 +1,9 @@
 import numpy as np
+import pandas as pd
 import altair as alt
 
 
-def transform_data(df):
+def transform_data(df, rnd):
     df.columns = ["🇺🇦".join(col).strip() for col in df.columns.values]
     df.rename(columns={df.columns[0]: "Тема", df.columns[1]: "Питання"}, inplace=True)
     df = df[~df["Тема"].isnull()]
@@ -17,6 +18,8 @@ def transform_data(df):
     df["price"] = df["Питання"].str.extract(r"([^.]+)").astype(int)
     df["topic"] = df["Тема"].str.extract(r"([^.]+)").astype(int)
     df["qid"] = df.agg("{0[topic]}.{0[price]}".format, axis=1)
+    df["round"] = rnd
+    df["gid"] = df.agg("{0[round]}.{0[Game]}".format, axis=1)
     df["pts"] = df["price"] * df["value"]
     df["pts_plus"] = np.select([df["value"] > 0], [df["pts"]], default=0)
     df["pts_minus"] = np.select([df["value"] < 0], [df["pts"]], default=0)
@@ -56,6 +59,7 @@ def render_topic_stats(df):
                 "header": i,
                 "questions_text": "\n\n---\n".join(g["Питання"].unique()),
                 "chart": (base + text).facet(column=alt.Column("qid:N", title=None)),
+                "stats": "",
             }
         )
     return result
@@ -107,3 +111,31 @@ def render_game_stats(df):
         }
         result.append(r)
     return result
+
+
+def get_total_stats(df, split_by):
+
+    total_stats = (
+        df.groupby(split_by)
+        .agg(
+            {
+                "pts": "sum",
+                "pts_plus": "sum",
+                "pts_minus": "sum",
+                "Name": pd.Series.nunique,
+            }
+        )
+        .rename(
+            columns={
+                "pts_plus": "В Плюс",
+                "pts_minus": "В Мінус",
+                "pts": "Балли",
+                "Name": "Бої",
+            }
+        )
+    )
+    total_stats["Сер. Балли за тему"] = total_stats["Балли"] / total_stats["Бої"]
+    total_stats["Сер. Плюси за тему"] = total_stats["В Плюс"] / total_stats["Бої"]
+    total_stats["Сер. Мінуси за тему"] = total_stats["В Мінус"] / total_stats["Бої"]
+
+    return total_stats

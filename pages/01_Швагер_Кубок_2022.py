@@ -5,8 +5,15 @@ import numpy as np
 import requests
 import altair as alt
 import re
-from utils import transform_data, render_topic_stats, render_game_stats
+from utils import (
+    get_total_stats,
+    transform_data,
+    render_topic_stats,
+    render_game_stats,
+    get_total_stats,
+)
 
+st.set_page_config(layout="wide")
 st.markdown("# Швагер-кубок 2022")
 
 
@@ -18,25 +25,42 @@ def main():
     for file in files:
         match = re.search(r"data/\d+_(?P<name>.*)/(?P<round>\d+).csv", file)
         df = pd.read_csv(file, header=[0, 1, 2, 3])
-        df = transform_data(df)
-        df["round"] = match.group("round")
+        rnd = match.group("round")
+        df = transform_data(df, rnd=rnd)
         df_all.append(df)
 
-    df = pd.concat(df_all)
+    df_all = pd.concat(df_all)
 
-    I_FILE_INPUT = st.selectbox("Оберіть коло", options=df["round"].unique())
+    (
+        I_TAB_TOTALS,
+        I_TAB_TOPIC_STATS,
+        I_TAB_GAME_STATS,
+    ) = st.tabs(["Загалом", "Статистика тем", "Статистика боїв"])
 
-    df = df[df["round"] == I_FILE_INPUT]
+    with I_TAB_TOTALS:
+        total_stats = get_total_stats(df_all, "round")
+        st.write(total_stats)
 
-    I_TAB_TOPIC_STATS, I_TAB_GAME_STATS = st.tabs(["Статистика тем", "Статистика боїв"])
+        for i, g in df_all.groupby("round"):
+            f"""Коло {i}"""
+            st.dataframe(get_total_stats(g, "Тема"))
 
     with I_TAB_TOPIC_STATS:
+        I_FILE_INPUT = st.selectbox(
+            "Оберіть коло",
+            options=df_all["round"].unique(),
+            format_func=lambda x: f"Коло {x}",
+        )
+
+        df = df_all[df_all["round"] == I_FILE_INPUT]
+
         results = render_topic_stats(df)
         for result in results:
             st.markdown(f"### {result['header']}")
-            with st.expander("Питання"):
+            with st.expander("Питання теми"):
                 st.markdown(result["questions_text"])
             st.altair_chart(result["chart"])
+            st.markdown(result["stats"])
 
     with I_TAB_GAME_STATS:
         for result in render_game_stats(df):
