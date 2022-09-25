@@ -195,11 +195,9 @@ def generate_scatter(df):
 
 
 def create_tabs(df_all):
-    (
-        I_TAB_TOTALS,
-        I_TAB_TOPIC_STATS,
-        I_TAB_GAME_STATS,
-    ) = st.tabs(["Загалом", "Статистика тем", "Статистика боїв"])
+    (I_TAB_GAME_STATS, I_TAB_TOTALS, I_TAB_TOPIC_STATS) = st.tabs(
+        ["Статистика боїв", "Загалом", "Статистика тем"]
+    )
 
     with I_TAB_TOTALS:
         total_stats = get_total_stats(df_all, "round")
