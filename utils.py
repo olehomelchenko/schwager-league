@@ -201,8 +201,6 @@ def create_tabs(df_all):
         I_TAB_TOPIC_STATS,
         I_TAB_GAME_STATS,
     ) = st.tabs(["Загалом", "Статистика тем", "Статистика боїв"])
-    # with tabs[0]:
-    #     st.write(1)
 
     with I_TAB_TOTALS:
         chart = generate_scatter(df_all)
@@ -210,11 +208,10 @@ def create_tabs(df_all):
         with st.expander("📊 плюси та мінуси по колах/темах"):
             st.altair_chart(chart)
         total_stats = get_total_stats(df_all, "round")
-        
+
         st.markdown("""### Статистика по колах""")
         st.write(total_stats)
 
-        # st.write(df_all)
         st.markdown("### Статистика бо темах")
         for i, g in df_all.groupby("round"):
             st.markdown(f"""> Коло {i}""")
