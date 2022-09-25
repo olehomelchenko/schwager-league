@@ -194,7 +194,7 @@ def generate_scatter(df):
             text="Тема",
         )
     )
-    return (text + base).configure_view(width=1000, height=600)
+    return (text + base).configure_view(width=800, height=600)
 
 
 def create_tabs(df_all):
