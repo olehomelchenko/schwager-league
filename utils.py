@@ -136,29 +136,22 @@ def render_game_stats(df):
 
 def get_total_stats(df, split_by):
 
-    total_stats = (
-        df.groupby(split_by)
-        .agg(
-            {
-                "Тема": "first",
-                "pts": "sum",
-                "pts_plus": "sum",
-                "pts_minus": "sum",
-                "Name": pd.Series.nunique,
-            }
-        )
-        .rename(
-            columns={
-                "pts_plus": "В Плюс",
-                "pts_minus": "В Мінус",
-                "pts": "Балли",
-                "Name": "Бої",
-            }
-        )
+    total_stats = df.groupby(split_by).agg(
+        {
+            "Тема": "first",
+            "pts": "sum",
+            "pts_plus": "sum",
+            "pts_minus": "sum",
+            "Name": pd.Series.nunique,
+            "Game": pd.Series.nunique,
+        }
     )
-    total_stats["Сер. Балли за тему"] = total_stats["Балли"] / total_stats["Бої"]
-    total_stats["Сер. Плюси за тему"] = total_stats["В Плюс"] / total_stats["Бої"]
-    total_stats["Сер. Мінуси за тему"] = total_stats["В Мінус"] / total_stats["Бої"]
+    total_stats["pts_avg"] = total_stats["pts"] / total_stats["Game"]
+    total_stats["pts_plus_avg"] = total_stats["pts_plus"] / total_stats["Game"]
+    total_stats["pts_minus_avg"] = total_stats["pts_minus"] / total_stats["Game"]
+    total_stats["pts_abs_avg"] = (
+        total_stats["pts_plus"] - total_stats["pts_minus"]
+    ) / total_stats["Game"]
 
     return total_stats
 
@@ -168,27 +161,31 @@ def generate_scatter(df):
         alt.Chart(df)
         .mark_circle(opacity=0.5)
         .encode(
-            x="sum(pts_plus):Q",
-            y=alt.Y("sum(pts_minus):Q", scale=alt.Scale(reverse=True)),
+            x=alt.X("sum(pts_plus_avg):Q", title="В плюс"),
+            y=alt.Y(
+                "sum(pts_minus_avg):Q", scale=alt.Scale(reverse=True), title="В мінус"
+            ),
             color="round:N",
             detail="Тема",
             tooltip=[
                 alt.Tooltip("round:N", title="Коло"),
                 alt.Tooltip("Тема", title="Тема"),
-                alt.Tooltip("sum(pts)", title="Балли"),
-                alt.Tooltip("sum(pts_plus)", title="В плюс"),
-                alt.Tooltip("sum(pts_minus)", title="В мінус"),
+                alt.Tooltip("Game", title="Ігри"),
+                alt.Tooltip("Name", title="Гравці"),
+                alt.Tooltip("sum(pts_avg)", title="Балли за гру", format=".2f"),
+                alt.Tooltip("sum(pts_plus_avg)", title="В плюс за гру", format=".2f"),
+                alt.Tooltip("sum(pts_minus_avg)", title="В мінус за гру", format=".2f"),
             ],
-            size=alt.Size("sum(pts_abs):Q", legend=None),
+            size=alt.Size("sum(pts_abs_avg):Q", legend=None),
         )
     )
 
     text = (
         alt.Chart(df)
-        .mark_text(opacity=0.9, align="left", dx=-0, dy=-20)
+        .mark_text(opacity=0.9, align="right", dx=-0, dy=-15)
         .encode(
-            x="sum(pts_plus):Q",
-            y=alt.Y("sum(pts_minus):Q", scale=alt.Scale(reverse=True)),
+            x="sum(pts_plus_avg):Q",
+            y=alt.Y("sum(pts_minus_avg):Q", scale=alt.Scale(reverse=True)),
             color=alt.Color("round:N", legend=None),
             detail="Тема",
             text="Тема",
@@ -215,7 +212,11 @@ def create_tabs(df_all):
             st.markdown(f"""> Коло {i}""")
             st.dataframe(get_total_stats(g, "topic").set_index("Тема"))
 
-        chart = generate_scatter(df_all)
+        chart = generate_scatter(
+            get_total_stats(df_all, ["round", "Тема"])
+            .drop(columns=["Тема"])
+            .reset_index()
+        )
 
         with st.expander("📊 плюси та мінуси по колах/темах"):
             st.altair_chart(chart)
