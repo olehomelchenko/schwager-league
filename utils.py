@@ -35,7 +35,8 @@ def transform_data(df, rnd):
     )
     df[["Game", "Name", "примітка", "c2"]] = df.variable.str.split("🇺🇦", expand=True)
     df["price"] = df["Питання"].str.extract(r"([^.]+)").astype(int)
-    df["topic"] = df["Тема"].str.extract(r"([^.]+)").astype(int)
+    df["topic"] = df["Тема"].str.extract(r"([^.]+)")
+    df["topic"] = df["topic"].str.pad(2)
     df["qid"] = df.agg("{0[topic]}.{0[price]}".format, axis=1)
     df["round"] = rnd
     df["gid"] = df.agg("{0[round]}.{0[Game]}".format, axis=1)
@@ -139,6 +140,7 @@ def get_total_stats(df, split_by):
         df.groupby(split_by)
         .agg(
             {
+                "Тема": "first",
                 "pts": "sum",
                 "pts_plus": "sum",
                 "pts_minus": "sum",
@@ -203,19 +205,20 @@ def create_tabs(df_all):
     ) = st.tabs(["Загалом", "Статистика тем", "Статистика боїв"])
 
     with I_TAB_TOTALS:
-        chart = generate_scatter(df_all)
-
-        with st.expander("📊 плюси та мінуси по колах/темах"):
-            st.altair_chart(chart)
         total_stats = get_total_stats(df_all, "round")
 
         st.markdown("""### Статистика по колах""")
-        st.write(total_stats)
+        st.write(total_stats.drop(columns=["Тема"]))
 
         st.markdown("### Статистика бо темах")
         for i, g in df_all.groupby("round"):
             st.markdown(f"""> Коло {i}""")
-            st.dataframe(get_total_stats(g, "Тема"))
+            st.dataframe(get_total_stats(g, "topic").set_index("Тема"))
+
+        chart = generate_scatter(df_all)
+
+        with st.expander("📊 плюси та мінуси по колах/темах"):
+            st.altair_chart(chart)
 
     with I_TAB_TOPIC_STATS:
         I_FILE_INPUT = st.selectbox(
